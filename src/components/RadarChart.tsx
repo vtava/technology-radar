@@ -9,6 +9,37 @@ type Props = {
   onSelect: (entry: RadarEntry) => void;
 };
 
+type Point = { x: number; y: number };
+
+const polarToCartesian = (cx: number, cy: number, radius: number, angle: number): Point => ({
+  x: cx + Math.cos(angle) * radius,
+  y: cy + Math.sin(angle) * radius
+});
+
+const describeSector = (
+  cx: number,
+  cy: number,
+  innerRadius: number,
+  outerRadius: number,
+  startAngle: number,
+  endAngle: number
+) => {
+  const outerStart = polarToCartesian(cx, cy, outerRadius, startAngle);
+  const outerEnd = polarToCartesian(cx, cy, outerRadius, endAngle);
+  const innerEnd = polarToCartesian(cx, cy, innerRadius, endAngle);
+  const innerStart = polarToCartesian(cx, cy, innerRadius, startAngle);
+
+  return [
+    `M ${outerStart.x} ${outerStart.y}`,
+    `A ${outerRadius} ${outerRadius} 0 0 1 ${outerEnd.x} ${outerEnd.y}`,
+    `L ${innerEnd.x} ${innerEnd.y}`,
+    `A ${innerRadius} ${innerRadius} 0 0 0 ${innerStart.x} ${innerStart.y}`,
+    'Z'
+  ].join(' ');
+};
+
+const quadrantBaseColors = ['34 197 94', '59 130 246', '168 85 247', '249 115 22'];
+
 export const RadarChart = ({ config, entries, onSelect }: Props) => {
   const width = 860;
   const height = 860;
@@ -25,8 +56,31 @@ export const RadarChart = ({ config, entries, onSelect }: Props) => {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full">
-        {[...sortedRings].reverse().map((ring, index) => {
-          const normalized = (sortedRings.length - index) / sortedRings.length;
+        {config.quadrants.map((quadrant, quadrantIndex) => {
+          const startAngle = -Math.PI + quadrantIndex * (Math.PI / 2);
+          const endAngle = startAngle + Math.PI / 2;
+          const baseColor = quadrantBaseColors[quadrantIndex % quadrantBaseColors.length];
+
+          return sortedRings.map((ring, ringIndex) => {
+            const innerRadius = (ringIndex / sortedRings.length) * radius;
+            const outerRadius = ((ringIndex + 1) / sortedRings.length) * radius;
+            const intensity = (sortedRings.length - ringIndex) / sortedRings.length;
+            const alpha = 0.12 + intensity * 0.2;
+
+            return (
+              <path
+                key={`${quadrant.id}-${ring.id}`}
+                d={describeSector(centerX, centerY, innerRadius, outerRadius, startAngle, endAngle)}
+                fill={`rgb(${baseColor} / ${alpha})`}
+                stroke="#e2e8f0"
+                strokeWidth="1"
+              />
+            );
+          });
+        })}
+
+        {sortedRings.map((ring, index) => {
+          const normalized = (index + 1) / sortedRings.length;
           return (
             <g key={ring.id}>
               <circle
@@ -34,28 +88,40 @@ export const RadarChart = ({ config, entries, onSelect }: Props) => {
                 cy={centerY}
                 r={radius * normalized}
                 fill="none"
-                stroke="#d1d5db"
+                stroke="#cbd5e1"
                 strokeWidth="1"
               />
-              <text x={centerX + 8} y={centerY - radius * normalized + 16} className="fill-slate-500 text-[13px]">
+              <text
+                x={centerX + 12}
+                y={centerY - radius * normalized + 18}
+                className="fill-slate-700 text-[13px] font-medium"
+              >
                 {ring.label}
               </text>
             </g>
           );
         })}
 
-        <line x1={centerX - radius} y1={centerY} x2={centerX + radius} y2={centerY} stroke="#d1d5db" />
-        <line x1={centerX} y1={centerY - radius} x2={centerX} y2={centerY + radius} stroke="#d1d5db" />
+        <line x1={centerX - radius} y1={centerY} x2={centerX + radius} y2={centerY} stroke="#94a3b8" />
+        <line x1={centerX} y1={centerY - radius} x2={centerX} y2={centerY + radius} stroke="#94a3b8" />
 
         {config.quadrants.map((quadrant, index) => {
-          const positions = [
-            { x: centerX - radius + 10, y: centerY - radius + 20 },
-            { x: centerX + 20, y: centerY - radius + 20 },
-            { x: centerX - radius + 10, y: centerY + radius - 10 },
-            { x: centerX + 20, y: centerY + radius - 10 }
-          ];
+          const startAngle = -Math.PI + index * (Math.PI / 2);
+          const endAngle = startAngle + Math.PI / 2;
+          const angle = startAngle + (endAngle - startAngle) / 2;
+          const labelPoint = polarToCartesian(centerX, centerY, radius + 32, angle);
+          const textAnchor =
+            Math.cos(angle) > 0.25 ? 'start' : Math.cos(angle) < -0.25 ? 'end' : 'middle';
+
           return (
-            <text key={quadrant.id} x={positions[index].x} y={positions[index].y} className="fill-slate-700 text-[14px] font-semibold">
+            <text
+              key={quadrant.id}
+              x={labelPoint.x}
+              y={labelPoint.y}
+              textAnchor={textAnchor}
+              dominantBaseline="middle"
+              className="fill-slate-800 text-[15px] font-semibold"
+            >
               {quadrant.label}
             </text>
           );
