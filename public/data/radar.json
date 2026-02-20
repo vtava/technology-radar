@@ -9,7 +9,7 @@
   ],
   "quadrants": [
     { "id": "politics", "label": "Politics & Society" },
-    { "id": "innovation", "label": "MA01 Innovation" },
+    { "id": "innovation", "label": "Innovation" },
     { "id": "tech", "label": "Technology & Trends" },
     { "id": "business", "label": "Digitalization & Business" }
   ],
