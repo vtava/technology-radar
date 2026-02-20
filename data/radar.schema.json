@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/radar.schema.json",
+  "title": "Technology Radar",
+  "type": "object",
+  "required": ["title", "updatedAt", "rings", "quadrants", "entries"],
+  "properties": {
+    "title": { "type": "string" },
+    "updatedAt": { "type": "string", "format": "date" },
+    "rings": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "order"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "order": { "type": "integer", "minimum": 1 },
+          "color": { "type": "string" }
+        }
+      }
+    },
+    "quadrants": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["id", "label"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" }
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "quadrantId",
+          "ringId",
+          "description",
+          "tags",
+          "owner",
+          "lastUpdated",
+          "links"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "quadrantId": { "type": "string" },
+          "ringId": { "type": "string" },
+          "description": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "owner": { "type": "string" },
+          "lastUpdated": { "type": "string", "format": "date" },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["label", "url"],
+              "properties": {
+                "label": { "type": "string" },
+                "url": { "type": "string", "format": "uri" }
+              }
+            }
+          },
+          "maturity": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      }
+    }
+  }
+}
